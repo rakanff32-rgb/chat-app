@@ -5,8 +5,10 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+// زيادة الحد الأقصى لحجم الرسائل (للصور والفيديو)
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: { origin: '*' },
+  maxHttpBufferSize: 1e8 // 100 MB
 });
 
 app.use(express.static(__dirname));
@@ -16,14 +18,8 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('مستخدم متصل:', socket.id);
-
   socket.on('chat message', (data) => {
     io.emit('chat message', data);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('مستخدم خرج:', socket.id);
   });
 });
 
