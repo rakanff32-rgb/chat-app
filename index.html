@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>محادثة نصية</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f0f2f5; }
+  #chat { max-width: 600px; margin: auto; background: #fff; border-radius: 10px; padding: 15px; height: 80vh; display: flex; flex-direction: column; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  h2 { margin: 0 0 10px; text-align: center; color: #333; }
+  #messages { flex: 1; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 10px; background: #fafafa; }
+  .msg { padding: 8px 12px; margin: 6px 0; background: #e4e6eb; border-radius: 12px; max-width: 80%; word-wrap: break-word; }
+  .msg.mine { background: #0084ff; color: #fff; margin-left: auto; }
+  .msg .name { font-size: 11px; color: #666; margin-bottom: 2px; font-weight: bold; }
+  .msg.mine .name { color: #cce4ff; }
+  #form { display: flex; gap: 8px; }
+  #name { width: 100px; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+  #input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 8px; }
+  button { padding: 10px 20px; background: #0084ff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+  button:hover { background: #0066cc; }
+</style>
+</head>
+<body>
+<div id="chat">
+  <h2>💬 محادثة نصية</h2>
+  <div id="messages"></div>
+  <form id="form">
+    <input id="name" placeholder="اسمك" required />
+    <input id="input" autocomplete="off" placeholder="اكتب رسالتك..." required />
+    <button type="submit">إرسال</button>
+  </form>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const socket = io();
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const nameInput = document.getElementById('name');
+  const messages = document.getElementById('messages');
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const name = nameInput.value.trim() || 'مجهول';
+    const text = input.value.trim();
+    if (!text) return;
+    socket.emit('chat message', { name: name, text: text });
+    addMessage({ name: name, text: text }, true);
+    input.value = '';
+    input.focus();
+  });
+
+  socket.on('chat message', function (data) {
+    addMessage(data, false);
+  });
+
+  function addMessage(data, isMine) {
+    const item = document.createElement('div');
+    item.className = 'msg' + (isMine ? ' mine' : '');
+    const nameEl = document.createElement('div');
+    nameEl.className = 'name';
+    nameEl.textContent = data.name;
+    const textEl = document.createElement('div');
+    textEl.textContent = data.text;
+    item.appendChild(nameEl);
+    item.appendChild(textEl);
+    messages.appendChild(item);
+    messages.scrollTop = messages.scrollHeight;
+  }
+</script>
+</body>
+</html>
