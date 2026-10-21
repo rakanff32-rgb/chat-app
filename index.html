@@ -19,7 +19,7 @@
   #login-btn:hover { background: #1ba87e; }
   #login-error { color: #dc3545; margin-top: 15px; display: none; font-weight: bold; font-size: 14px; }
 
-  /* --- شاشة المحادثة (مخفية في البداية) --- */
+  /* --- شاشة المحادثة --- */
   #chat-screen { display: none; max-width: 600px; width: 100%; background: #fff; border-radius: 10px; padding: 10px; height: 95vh; flex-direction: column; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 10px;}
   h2.chat-title { margin: 0 0 10px; text-align: center; color: #333; font-size: 18px; }
   #messages { flex: 1; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 8px; margin-bottom: 10px; background: #fafafa; }
@@ -30,9 +30,14 @@
   .msg img, .msg video { max-width: 100%; border-radius: 8px; margin-top: 5px; }
   .msg audio { width: 100%; margin-top: 5px; }
   
-  #sticker-picker { display: none; margin-bottom: 10px; background: #eee; padding: 10px; border-radius: 8px; max-height: 150px; overflow-y: auto; text-align: center; }
-  #sticker-picker img { width: 50px; height: 50px; cursor: pointer; margin: 5px; transition: transform 0.2s; }
-  #sticker-picker img:hover { transform: scale(1.2); }
+  /* لوحة الملصقات الجديدة */
+  #sticker-picker { display: none; margin-bottom: 10px; background: #fff; border: 1px solid #ddd; padding: 10px; border-radius: 8px; height: 200px; overflow-y: auto; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+  .sticker-tabs { display: flex; gap: 10px; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; position: sticky; top: 0; background: #fff; }
+  .sticker-tab { cursor: pointer; font-size: 20px; padding: 5px; border-radius: 5px; transition: background 0.2s; }
+  .sticker-tab:hover { background: #f0f0f0; }
+  .sticker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
+  .sticker-grid img { width: 100%; max-width: 70px; height: 70px; object-fit: contain; cursor: pointer; transition: transform 0.2s; }
+  .sticker-grid img:hover { transform: scale(1.2); }
   
   #form { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
   #name { width: 70px; padding: 8px; border: 1px solid #ccc; border-radius: 8px; }
@@ -55,20 +60,22 @@
     <div id="login-error">كلمة المرور غير صحيحة. يرجى المحاولة مرة أخرى.</div>
   </div>
 
-  <!-- شاشة المحادثة (تظهر فقط بعد كلمة السر) -->
+  <!-- شاشة المحادثة -->
   <div id="chat-screen">
     <h2 class="chat-title">💬 محادثة خاصة</h2>
     <div id="messages"></div>
     
+    <!-- لوحة الملصقات -->
     <div id="sticker-picker">
-      <img src="https://cdn-icons-png.flaticon.com/512/742/742752.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/742/742751.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/2583/2583344.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/616/616430.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/3468/3468081.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/616/616494.png" onclick="sendSticker(this.src)">
-      <img src="https://cdn-icons-png.flaticon.com/512/742/742760.png" onclick="sendSticker(this.src)">
+      <div class="sticker-tabs">
+        <div class="sticker-tab" onclick="loadStickers('emoji')" title="وجوه">😀</div>
+        <div class="sticker-tab" onclick="loadStickers('animals')" title="حيوانات">🐶</div>
+        <div class="sticker-tab" onclick="loadStickers('love')" title="حب">❤️</div>
+        <div class="sticker-tab" onclick="loadStickers('memes')" title="ميمز">🤪</div>
+      </div>
+      <div class="sticker-grid" id="sticker-grid">
+        <!-- سيتم تحميل الملصقات هنا بواسطة الجافاسكربت -->
+      </div>
     </div>
 
     <form id="form">
@@ -87,21 +94,19 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
   // --- 1. نظام كلمة السر ---
-  const ROOM_PASSWORD = "500600"; // <--- كلمة السر الجديدة
+  const ROOM_PASSWORD = "500600"; 
   
   function checkPassword() {
     const input = document.getElementById('password-input').value;
     if (input === ROOM_PASSWORD) {
-      // إخفاء شاشة الواي فاي وإظهار المحادثة
       document.getElementById('fake-login-screen').style.display = 'none';
-      const chatScreen = document.getElementById('chat-screen');
-      chatScreen.style.display = 'flex';
-      document.body.style.background = '#f0f2f5'; // تغيير خلفية الصفحة
+      document.getElementById('chat-screen').style.display = 'flex';
+      document.body.style.background = '#f0f2f5'; 
       document.getElementById('input').focus();
+      loadStickers('emoji'); // تحميل ملصقات الوجوه افتراضياً
     } else {
-      // إظهار خطأ
       document.getElementById('login-error').style.display = 'block';
-      document.getElementById('password-input').value = ''; // تفريغ الحقل
+      document.getElementById('password-input').value = ''; 
     }
   }
 
@@ -115,6 +120,62 @@
   let mediaRecorder;
   let audioChunks = [];
   let isRecording = false;
+
+  // روابط ملصقات من الإنترنت (مصنفة)
+  const stickersData = {
+    emoji: [
+      'https://cdn-icons-png.flaticon.com/512/742/742752.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742751.png',
+      'https://cdn-icons-png.flaticon.com/512/2583/2583344.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742760.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742768.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742786.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742779.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742761.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742755.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742757.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742740.png',
+      'https://cdn-icons-png.flaticon.com/512/742/742776.png'
+    ],
+    animals: [
+      'https://cdn-icons-png.flaticon.com/512/616/616430.png',
+      'https://cdn-icons-png.flaticon.com/512/616/616408.png',
+      'https://cdn-icons-png.flaticon.com/512/616/616494.png',
+      'https://cdn-icons-png.flaticon.com/512/616/616554.png',
+      'https://cdn-icons-png.flaticon.com/512/616/616564.png',
+      'https://cdn-icons-png.flaticon.com/512/3468/3468081.png',
+      'https://cdn-icons-png.flaticon.com/512/616/616412.png',
+      'https://cdn-icons-png.flaticon.com/512/616/616569.png'
+    ],
+    love: [
+      'https://cdn-icons-png.flaticon.com/512/833/833472.png',
+      'https://cdn-icons-png.flaticon.com/512/833/833435.png',
+      'https://cdn-icons-png.flaticon.com/512/833/833443.png',
+      'https://cdn-icons-png.flaticon.com/512/833/833481.png',
+      'https://cdn-icons-png.flaticon.com/512/2107/2107956.png',
+      'https://cdn-icons-png.flaticon.com/512/2589/2589175.png'
+    ],
+    memes: [
+      'https://cdn-icons-png.flaticon.com/512/5242/5242418.png',
+      'https://cdn-icons-png.flaticon.com/512/5242/5242451.png',
+      'https://cdn-icons-png.flaticon.com/512/5242/5242458.png',
+      'https://cdn-icons-png.flaticon.com/512/5242/5242431.png',
+      'https://cdn-icons-png.flaticon.com/512/5242/5242478.png'
+    ]
+  };
+
+  function loadStickers(category) {
+    const grid = document.getElementById('sticker-grid');
+    grid.innerHTML = '';
+    const stickers = stickersData[category] || [];
+    
+    stickers.forEach(url => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.onclick = () => sendSticker(url);
+      grid.appendChild(img);
+    });
+  }
 
   function toggleStickers() {
     const picker = document.getElementById('sticker-picker');
@@ -212,7 +273,7 @@
     } else if (data.type === 'image' || data.type === 'sticker') {
       const img = document.createElement('img');
       img.src = data.url;
-      if(data.type === 'sticker') img.style.width = '80px'; 
+      if(data.type === 'sticker') img.style.width = '100px'; // حجم الملصق
       item.appendChild(img);
     } else if (data.type === 'video') {
       const vid = document.createElement('video');
@@ -230,7 +291,6 @@
     messages.scrollTop = messages.scrollHeight;
   }
   
-  // تفعيل زر Enter لدخول كلمة السر
   document.getElementById('password-input').addEventListener('keypress', function (e) {
     if (e.key === 'Enter') checkPassword();
   });
